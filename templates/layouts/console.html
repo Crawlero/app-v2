@@ -1,13 +1,68 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
     <title>Console</title>
     <link href="/static/main.css" rel="stylesheet" />
-
   </head>
-  <body>
-    <header>Header</header>
 
-    {{ template "content" . }}
+  <body class="flex">
+    <!-- Sidebar -->
+    <aside
+      class="w-64 h-screen bg-white text-gray-800 flex flex-col justify-between border-r border-gray-200"
+    >
+      <div>
+        <!-- Brand Text -->
+        <div
+          class="text-xl p-4 font-bold bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 text-transparent bg-clip-text border-b border-gray-200"
+        >
+          Crawlero
+        </div>
+        <nav class="mt-2">
+          <ul>
+            <li class="px-4 py-2 hover:bg-gray-100">
+              <a href="/crawler" class="block text-gray-700 flex items-center">
+                <img
+                  src="/static/icons/crawler.svg"
+                  class="w-6 h-6 inline-block mr-2"
+                />
+                Crawler
+              </a>
+            </li>
+            <li class="px-4 py-2 hover:bg-gray-100">
+              <a href="/setting" class="block text-gray-700 flex items-center">
+                <img
+                  src="/static/icons/setting.svg"
+                  class="w-6 h-6 inline-block mr-2"
+                />
+                Setting
+              </a>
+            </li>
+            <li class="px-4 py-2 hover:bg-gray-100">
+              <a href="/proxy" class="block text-gray-700 flex items-center">
+                <img
+                  src="/static/icons/proxy.svg"
+                  class="w-6 h-6 inline-block mr-2"
+                />
+                Proxy
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+
+      <!-- Current Login User -->
+      <div class="p-4 flex items-center border-t border-gray-200">
+        <div
+          class="w-12 h-12 rounded-full bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 mr-4"
+        ></div>
+        <div>
+          <div class="text-lg font-bold">John Doe</div>
+          <div class="text-sm text-gray-500">john.doe@example.com</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 p-4">{{ template "content" . }}</div>
   </body>
 </html>
