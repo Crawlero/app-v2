@@ -1,0 +1,60 @@
+<div
+  class="fixed inset-0 flex items-center justify-center z-10 bg-gray-500 bg-opacity-75 w-full h-full"
+  _="on closeModal remove me"
+>
+  <div
+    class="inset-0 flex items-center justify-center z-10 bg-gray-500 bg-opacity-75"
+  >
+    <div class="bg-white rounded-lg shadow-xl w-full w-96 p-6">
+      <h3 class="text-lg font-semibold text-gray-900">Create new crawler</h3>
+
+      <form
+        id="create-crawler-form"
+        class="mt-4"
+        action="/crawler"
+        method="POST"
+      >
+        <div class="mb-4">
+          <label for="name" class="block text-sm font-medium text-gray-700"
+            >Name</label
+          >
+          <input
+            type="text"
+            id="name"
+            name="name"
+            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+            required
+          />
+        </div>
+        <div class="mb-4">
+          <label
+            for="description"
+            class="block text-sm font-medium text-gray-700"
+            >Description</label
+          >
+          <textarea
+            id="description"
+            name="description"
+            rows="3"
+            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+          ></textarea>
+        </div>
+        <div class="mt-4 flex justify-end space-x-2">
+          <button
+            type="button"
+            class="font-medium rounded-md text-sm px-2.5 py-1.5 shadow-sm ring-1 ring-gray-300 text-gray-700 bg-gray-50 hover:bg-gray-100 focus:ring-2 focus:ring-primary-500 flex items-center disabled:opacity-75 disabled:cursor-not-allowed"
+            _="on click trigger closeModal"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="font-medium rounded-md text-sm px-2.5 py-1.5 shadow-sm ring-1 ring-gray-300 text-gray-700 bg-gray-50 hover:bg-gray-100 focus:ring-2 focus:ring-primary-500 flex items-center disabled:opacity-75 disabled:cursor-not-allowed"
+          >
+            Create
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

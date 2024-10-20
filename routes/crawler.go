@@ -1,6 +1,9 @@
 package routes
 
 import (
+	"context"
+	"crawlero-app/db"
+	"fmt"
 	"net/http"
 	"text/template"
 
@@ -22,13 +25,14 @@ var detailCrawlerTmpl, _ = template.Must(consoleLayout.Clone()).ParseFiles(
 type Crawler struct {
 	ID     string
 	Name   string
-	Url    int
+	Url    string
 	Status string
 }
 
 func CrawerRoutes() chi.Router {
 	router := chi.NewRouter()
 	router.Get("/", listCrawler)
+	router.Post("/", createCrawler)
 	router.Get("/{crawlerID}", getOneCrawler)
 
 	// router.Route("/{articleID}", func(r chi.Router) {
@@ -41,10 +45,36 @@ func CrawerRoutes() chi.Router {
 }
 
 func listCrawler(w http.ResponseWriter, r *http.Request) {
-	crawlers := []Crawler{
-		{Name: "John Brown", Url: 45, Status: "active", ID: "1"},
-		{Name: "Jim Green", Url: 27, Status: "inactive", ID: "2"},
-		{Name: "Joe Black", Url: 31, Status: "active", ID: "3"},
+	pool := db.GetDbPool()
+	var crawlers []Crawler
+
+	rows, err := pool.Query(context.Background(), "SELECT id, name, url, status FROM crawlers")
+
+	if err != nil {
+		fmt.Println("Error:", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	fmt.Println("Result:", rows)
+
+	for rows.Next() {
+		var id string
+		var name string
+		var url string
+		var status string
+
+		err = rows.Scan(&id, &name, &url, &status)
+		if err != nil {
+			fmt.Println("Error:", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+
+		crawlers = append(crawlers, Crawler{
+			ID:     id,
+			Name:   name,
+			Url:    url,
+			Status: status,
+		})
 	}
 
 	data := map[string]interface{}{
@@ -65,4 +95,20 @@ func getOneCrawler(w http.ResponseWriter, r *http.Request) {
 	if err := detailCrawlerTmpl.Execute(w, data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+func createCrawler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Create Crawler")
+
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	name := r.FormValue("name")
+	desc := r.FormValue("description")
+
+	fmt.Println("Name:", name)
+	fmt.Println("Desc:", desc)
+
+	http.Redirect(w, r, "/crawler", http.StatusSeeOther)
 }

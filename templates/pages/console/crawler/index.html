@@ -3,7 +3,9 @@
   <div class="flex justify-start items-center gap-4">
     <h1 class="text-xl font-bold">Crawlers</h1>
     <button
-      type="button"
+      hx-get="/static/parts/create-crawler-form.html"
+      hx-target="body"
+      hx-swap="beforeend"
       class="font-medium rounded-md text-sm px-2.5 py-1.5 shadow-sm ring-1 ring-gray-300 text-gray-700 bg-gray-50 hover:bg-gray-100 focus:ring-2 focus:ring-primary-500 flex items-center disabled:opacity-75 disabled:cursor-not-allowed"
     >
       Add New
