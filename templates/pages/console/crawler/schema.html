@@ -1,0 +1,21 @@
+{{ define "content" }}
+<div>
+  {{ template "crawler-detail-header" . }}
+
+  <div id="form-container"></div>
+  <button class="btn btn-primary" onclick="submit()">Submit</button>
+</div>
+
+<script src="/static/js/schema-editor.js"></script>
+
+<script>
+  const formContainer = document.getElementById("form-container");
+  const fields = [];
+  renderFields(fields, formContainer);
+
+  function submit() {
+    console.log("submit");
+    console.log(fields);
+  }
+</script>
+{{ end }}

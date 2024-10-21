@@ -1,5 +1,64 @@
 {{ define "content" }}
 <div>
-  <h1 class="">C detail</h1>
+  {{ template "crawler-detail-header" . }}
+
+  <form
+    id="update-crawler-form"
+    class="mt-4 max-w-2xl"
+    hx-trigger="submit"
+    hx-put="/crawler/{{ .ID }}"
+    hx-target="#toast"
+  >
+    <div class="mb-4">
+      <label for="name" class="block text-sm font-medium text-gray-700 required"
+        >Name</label
+      >
+      <input
+        type="text"
+        id="name"
+        name="name"
+        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+        placeholder="My Crawler"
+        value="{{ .Name }}"
+        required
+      />
+    </div>
+    <div class="mb-4">
+      <label for="url" class="block text-sm font-medium text-gray-700 required"
+        >Target URL</label
+      >
+      <input
+        type="text"
+        id="url"
+        name="url"
+        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+        placeholder="youtube.com"
+        value="{{ .Url }}"
+        required
+      />
+    </div>
+    <div class="mb-4">
+      <label for="description" class="block text-sm font-medium text-gray-700"
+        >Description</label
+      >
+      <textarea
+        id="description"
+        name="description"
+        rows="3"
+        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+      >
+{{ if .Description.Valid }}{{ .Description.String }}{{ end }}</textarea
+      >
+    </div>
+    <p class="text-gray-500" id="toast"></p>
+    <div class="mt-4 flex justify-end space-x-2">
+      <button
+        type="submit"
+        class="font-medium rounded-md text-sm px-2.5 py-1.5 shadow-sm ring-1 ring-gray-300 text-gray-700 bg-gray-50 hover:bg-gray-100 focus:ring-2 focus:ring-primary-500 flex items-center disabled:opacity-75 disabled:cursor-not-allowed"
+      >
+        Update
+      </button>
+    </div>
+  </form>
 </div>
 {{ end }}

@@ -71,4 +71,20 @@
     <!-- Main Content -->
     <div class="flex-1 p-4">{{ template "content" . }}</div>
   </body>
+
+  <style>
+    .required:after {
+      content: " *";
+      color: red;
+    }
+  </style>
+
+  <script>
+    const currentTab = document.querySelector(
+      `a[href='${window.location.pathname}']`,
+    );
+    if (currentTab) {
+      currentTab.classList.add("text-gray-900", "border-gray-500");
+    }
+  </script>
 </html>

@@ -3,6 +3,7 @@ package routes
 import (
 	"context"
 	"crawlero-app/db"
+	"database/sql"
 	"fmt"
 	"net/http"
 	"text/template"
@@ -18,29 +19,38 @@ var listCrawlerTmpl, _ = template.Must(consoleLayout.Clone()).ParseFiles(
 	"templates/pages/console/crawler/index.html",
 )
 
-var detailCrawlerTmpl, _ = template.Must(consoleLayout.Clone()).ParseFiles(
+var crawlerInfoTmpl, _ = template.Must(consoleLayout.Clone()).ParseFiles(
+	"templates/parts/crawler-detail-header.html",
 	"templates/pages/console/crawler/detail.html",
 )
 
+var crawlerSchemaTmpl, _ = template.Must(consoleLayout.Clone()).ParseFiles(
+	"templates/parts/crawler-detail-header.html",
+	"templates/pages/console/crawler/schema.html",
+)
+
+var crawlerScheduleTmpl, _ = template.Must(consoleLayout.Clone()).ParseFiles(
+	"templates/parts/crawler-detail-header.html",
+	"templates/pages/console/crawler/schedule.html",
+)
+
 type Crawler struct {
-	ID     string
-	Name   string
-	Url    string
-	Status string
+	ID          string
+	Name        string
+	Url         string
+	Status      string
+	Description sql.NullString
 }
 
 func CrawerRoutes() chi.Router {
 	router := chi.NewRouter()
 	router.Get("/", listCrawler)
 	router.Post("/", createCrawler)
-	router.Get("/{crawlerID}", getOneCrawler)
+	router.Get("/{crawlerID}", getCrawlerInfo)
+	router.Put("/{crawlerID}", updateCrawlerInfo)
+	router.Get("/{crawlerID}/schema", getCrawlerSchema)
+	router.Get("/{crawlerID}/schedule", getCrawlerSchedule)
 
-	// router.Route("/{articleID}", func(r chi.Router) {
-	// 	r.Use(ar.ArticleCtx)            // Load the *Article on the request context
-	// 	r.Get("/", ar.GetArticle)       // GET /articles/123
-	// 	r.Put("/", ar.UpdateArticle)    // PUT /articles/123
-	// 	r.Delete("/", ar.DeleteArticle) // DELETE /articles/123
-	// })
 	return router
 }
 
@@ -53,9 +63,8 @@ func listCrawler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Println("Error:", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
-
-	fmt.Println("Result:", rows)
 
 	for rows.Next() {
 		var id string
@@ -67,6 +76,7 @@ func listCrawler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			fmt.Println("Error:", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
 		crawlers = append(crawlers, Crawler{
@@ -86,20 +96,87 @@ func listCrawler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getOneCrawler(w http.ResponseWriter, r *http.Request) {
-	data := map[string]string{
-		"Title":   "Crawler",
-		"Message": "Crawler",
+func getCrawlerInfo(w http.ResponseWriter, r *http.Request) {
+	crawlerID := chi.URLParam(r, "crawlerID")
+	pool := db.GetDbPool()
+	crawler := Crawler{}
+
+	err := pool.QueryRow(context.Background(), "SELECT id, name, url, status, description FROM crawlers WHERE id = $1", crawlerID).Scan(
+		&crawler.ID,
+		&crawler.Name,
+		&crawler.Url,
+		&crawler.Status,
+		&crawler.Description,
+	)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
-	if err := detailCrawlerTmpl.Execute(w, data); err != nil {
+	if err := crawlerInfoTmpl.Execute(w, crawler); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func getCrawlerSchema(w http.ResponseWriter, r *http.Request) {
+	crawlerID := chi.URLParam(r, "crawlerID")
+	pool := db.GetDbPool()
+	crawler := Crawler{}
+
+	err := pool.QueryRow(context.Background(), "SELECT id, name, url, status, description FROM crawlers WHERE id = $1", crawlerID).Scan(
+		&crawler.ID,
+		&crawler.Name,
+		&crawler.Url,
+		&crawler.Status,
+		&crawler.Description,
+	)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	fields := []struct{ Name, Selector, Type string }{
+		{Name: "Title", Selector: ".title", Type: "text"},
+		{Name: "Link", Selector: ".link", Type: "url"},
+	}
+
+	if err := crawlerSchemaTmpl.Execute(
+		w,
+		map[string]interface{}{
+			"ID":     crawlerID,
+			"Fields": fields,
+		},
+	); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func getCrawlerSchedule(w http.ResponseWriter, r *http.Request) {
+	crawlerID := chi.URLParam(r, "crawlerID")
+	pool := db.GetDbPool()
+	crawler := Crawler{}
+
+	err := pool.QueryRow(context.Background(), "SELECT id, name, url, status, description FROM crawlers WHERE id = $1", crawlerID).Scan(
+		&crawler.ID,
+		&crawler.Name,
+		&crawler.Url,
+		&crawler.Status,
+		&crawler.Description,
+	)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err := crawlerScheduleTmpl.Execute(
+		w,
+		crawler,
+	); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
 func createCrawler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Create Crawler")
-
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -107,8 +184,41 @@ func createCrawler(w http.ResponseWriter, r *http.Request) {
 	name := r.FormValue("name")
 	desc := r.FormValue("description")
 
-	fmt.Println("Name:", name)
-	fmt.Println("Desc:", desc)
+	pool := db.GetDbPool()
+	_, err := pool.Exec(context.Background(), "INSERT INTO crawlers (name, url, status) VALUES ($1, $2, $3)", name, desc, "active")
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	http.Redirect(w, r, "/crawler", http.StatusSeeOther)
+}
+
+func updateCrawlerInfo(w http.ResponseWriter, r *http.Request) {
+	crawlerID := chi.URLParam(r, "crawlerID")
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	name := r.FormValue("name")
+	desc := r.FormValue("description")
+	url := r.FormValue("url")
+
+	pool := db.GetDbPool()
+	_, err := pool.Exec(
+		context.Background(),
+		"UPDATE crawlers SET name = $1, url = $2, description = $3 WHERE id = $4",
+		name,
+		url,
+		desc,
+		crawlerID,
+	)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Write([]byte("Updated"))
 }
