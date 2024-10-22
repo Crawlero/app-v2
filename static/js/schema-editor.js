@@ -5,7 +5,7 @@ const defaultField = {
 };
 
 const CLASS_NAMES = {
-  mainContainer: "flex items-center gap-x-1 mb-1",
+  mainContainer: "flex items-center gap-x-1 mb-1 fieldItem",
   input:
     "disabled:cursor-not-allowed disabled:opacity-75 focus:outline-none border-0 form-input rounded-md placeholder-gray-400 text-sm px-2.5 py-1.5 shadow-sm bg-white text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-primary-500 max-w-72",
   select:
@@ -150,8 +150,6 @@ const FieldItem = {
  * @returns {HTMLDivElement} The field container.
  */
 function renderField(field, container, onDelete) {
-  console.log("renderField_");
-
   // Clear the container
   container.innerHTML = "";
   const reRender = () => renderField(field, container, onDelete);

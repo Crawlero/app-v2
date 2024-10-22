@@ -18,4 +18,31 @@
     console.log(fields);
   }
 </script>
+
+<style>
+  .fieldItem {
+    animation: show 1s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+    opacity: 0;
+    transform: rotateX(-90deg);
+    transform-origin: top center;
+  }
+
+  @keyframes show {
+    0% {
+      opacity: 0;
+      transform: rotateX(-90deg) translateY(-100px);
+    }
+    50% {
+      opacity: 1;
+      transform: rotateX(20deg) translateY(10px);
+    }
+    70% {
+      transform: rotateX(-10deg) translateY(-5px);
+    }
+    100% {
+      opacity: 1;
+      transform: rotateX(0deg) translateY(0);
+    }
+  }
+</style>
 {{ end }}
