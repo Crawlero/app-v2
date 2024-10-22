@@ -196,12 +196,6 @@ function renderField(field, container, onDelete) {
 }
 
 /**
- * cache to store field containers
- * @type {Map<Field, HTMLDivElement>}
- **/
-const fieldCache = new Map();
-
-/**
  * Renders list field based on the fields data.
  * @param {Field[]} fields - The fields data.
  * @param {HTMLDivElement} container - The container element to append the field.
@@ -211,16 +205,12 @@ export function renderFields(fields, container) {
   container.innerHTML = "";
 
   // render list of fields
-  fields.forEach((field, i) => {
-    let fieldContainer = fieldCache.get(field);
-    if (!fieldContainer) {
-      fieldContainer = document.createElement("div");
-      fieldCache.set(field, fieldContainer);
-    }
+  fields.forEach((field) => {
+    const fieldContainer = document.createElement("div");
     container.appendChild(fieldContainer);
 
     renderField(field, fieldContainer, () => {
-      removeField(field, fields, container);
+      removeField(field, fields, fieldContainer, container);
     });
   });
 
@@ -233,18 +223,16 @@ export function renderFields(fields, container) {
     const newField = { ...defaultField };
     fields.push(newField);
     const newFieldContainer = document.createElement("div");
-    fieldCache.set(newField, newFieldContainer);
     container.insertBefore(newFieldContainer, addFieldButton);
 
     renderField(newField, newFieldContainer, () => {
-      removeField(newField, fields, container);
+      removeField(newField, fields, newFieldContainer, container);
     });
   });
 }
 
-function removeField(field, fields, parentContainer) {
+function removeField(field, fields, fieldContainer, parentContainer) {
   fields.splice(fields.indexOf(field), 1);
-  const fieldContainer = fieldCache.get(field);
 
   // animate the removal
   fieldContainer.classList.add("removing");
@@ -253,6 +241,4 @@ function removeField(field, fields, parentContainer) {
   fieldContainer.addEventListener("animationend", () => {
     parentContainer.removeChild(fieldContainer);
   });
-
-  fieldCache.delete(field);
 }
