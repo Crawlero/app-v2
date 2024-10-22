@@ -3,12 +3,11 @@
   {{ template "crawler-detail-header" . }}
 
   <div id="form-container" class="mt-2"></div>
-  <button class="btn btn-primary" onclick="submit()">Submit</button>
+  <button class="btn btn-primary" id="submit">Submit</button>
 </div>
 
 <script type="module">
   import { renderFields } from "/static/js/schema-editor.mjs";
-
 
   const formContainer = document.getElementById("form-container");
   const fields = [
@@ -20,19 +19,25 @@
   ];
   renderFields(fields, formContainer);
 
-  function submit() {
+  document.getElementById("submit").addEventListener("click", () => {
     console.log("submit");
     console.log(fields);
-  }
+  });
 </script>
 
 <style>
   .fieldItem {
     animation:
       show 0.2s ease-out forwards,
-      colorSplash 0.3s ease-out forwards;
+      colorSplash 0.2s ease-out forwards;
     opacity: 0;
-    transform: translateX(100%) scale(0.95);
+    transform: translateY(-100%);
+  }
+
+  .removing {
+    animation:
+      remove 0.2s ease-out forwards,
+      colorSplash 0.3s ease-out forwards;
   }
 
   .inputField {
@@ -42,15 +47,26 @@
   @keyframes show {
     0% {
       opacity: 0;
-      transform: translateX(100%) scale(0.95);
-    }
-    50% {
-      opacity: 0.5;
-      transform: translateX(-10px) scale(1.02);
+      transform: translateY(-100%);
     }
     100% {
       opacity: 1;
-      transform: translateX(0) scale(1);
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes remove {
+    0% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    50% {
+      opacity: 0.5;
+      transform: translateY(-10px) scale(1.02);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-100%) scale(0.95);
     }
   }
 
@@ -78,4 +94,5 @@
     }
   }
 </style>
-{{ end }}
+
+{{end}}

@@ -195,8 +195,18 @@ function renderField(field, container, onDelete) {
   return container;
 }
 
+/**
+ * cache to store field containers
+ * @type {Map<Field, HTMLDivElement>}
+ **/
 const fieldCache = new Map();
 
+/**
+ * Renders list field based on the fields data.
+ * @param {Field[]} fields - The fields data.
+ * @param {HTMLDivElement} container - The container element to append the field.
+ * @returns {void}
+ */
 export function renderFields(fields, container) {
   container.innerHTML = "";
 
@@ -210,9 +220,7 @@ export function renderFields(fields, container) {
     container.appendChild(fieldContainer);
 
     renderField(field, fieldContainer, () => {
-      fields.splice(i, 1);
-      fieldCache.delete(field);
-      container.removeChild(fieldContainer);
+      removeField(field, fields, container);
     });
   });
 
@@ -229,9 +237,22 @@ export function renderFields(fields, container) {
     container.insertBefore(newFieldContainer, addFieldButton);
 
     renderField(newField, newFieldContainer, () => {
-      fields.splice(fields.indexOf(newField), 1);
-      fieldCache.delete(newField);
-      container.removeChild(newFieldContainer);
+      removeField(newField, fields, container);
     });
   });
+}
+
+function removeField(field, fields, parentContainer) {
+  fields.splice(fields.indexOf(field), 1);
+  const fieldContainer = fieldCache.get(field);
+
+  // animate the removal
+  fieldContainer.classList.add("removing");
+
+  // remove the field after the animation ends
+  fieldContainer.addEventListener("animationend", () => {
+    parentContainer.removeChild(fieldContainer);
+  });
+
+  fieldCache.delete(field);
 }
