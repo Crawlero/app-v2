@@ -150,10 +150,6 @@ const FieldItem = {
  * @returns {HTMLDivElement} The field container.
  */
 function renderField(field, container, onDelete) {
-  // Clear the container
-  container.innerHTML = "";
-  const reRender = () => renderField(field, container, onDelete);
-
   // Create the first row: name, selector, type, attribute, delete btn (if type is attribute)
   const firstRow = document.createElement("div");
   firstRow.className = CLASS_NAMES.mainContainer;
@@ -192,28 +188,50 @@ function renderField(field, container, onDelete) {
       field.attribute = "";
     }
 
-    reRender();
+    container.innerHTML = "";
+    renderField(field, container, onDelete);
   });
+
+  return container;
 }
+
+const fieldCache = new Map();
 
 function renderFields(fields, container) {
   container.innerHTML = "";
-  const reRender = () => renderFields(fields, container);
 
+  // render list of fields
   fields.forEach((field, i) => {
-    const fieldContainer = document.createElement("div");
+    let fieldContainer = fieldCache.get(field);
+    if (!fieldContainer) {
+      fieldContainer = document.createElement("div");
+      fieldCache.set(field, fieldContainer);
+    }
     container.appendChild(fieldContainer);
 
     renderField(field, fieldContainer, () => {
       fields.splice(i, 1);
-      reRender();
+      fieldCache.delete(field);
+      container.removeChild(fieldContainer);
     });
   });
 
+  // add button to add new field
   const addFieldButton = FieldItem.addFieldButton();
-  addFieldButton.addEventListener("click", () => {
-    fields.push({ ...defaultField });
-    reRender();
-  });
   container.appendChild(addFieldButton);
+
+  // add event listener to add button
+  addFieldButton.addEventListener("click", () => {
+    const newField = { ...defaultField };
+    fields.push(newField);
+    const newFieldContainer = document.createElement("div");
+    fieldCache.set(newField, newFieldContainer);
+    container.insertBefore(newFieldContainer, addFieldButton);
+
+    renderField(newField, newFieldContainer, () => {
+      fields.splice(fields.indexOf(newField), 1);
+      fieldCache.delete(newField);
+      container.removeChild(newFieldContainer);
+    });
+  });
 }
