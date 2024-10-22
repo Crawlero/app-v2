@@ -6,9 +6,10 @@
   <button class="btn btn-primary" onclick="submit()">Submit</button>
 </div>
 
-<script src="/static/js/schema-editor.js"></script>
+<script type="module">
+  import { renderFields } from "/static/js/schema-editor.mjs";
 
-<script>
+
   const formContainer = document.getElementById("form-container");
   const fields = [
     {
@@ -55,13 +56,25 @@
 
   @keyframes colorSplash {
     0% {
-      background: linear-gradient(45deg, #ff9a9e, #fad0c4); /* Start with a gradient from light pink to peach */
+      background: linear-gradient(
+        45deg,
+        #ff9a9e,
+        #fad0c4
+      ); /* Start with a gradient from light pink to peach */
     }
     50% {
-      background: linear-gradient(45deg, #fad0c4, #fcb69f); /* Transition to a gradient from peach to light coral */
+      background: linear-gradient(
+        45deg,
+        #fad0c4,
+        #fcb69f
+      ); /* Transition to a gradient from peach to light coral */
     }
     100% {
-      background: linear-gradient(45deg, transparent, transparent); /* End with a transparent gradient */
+      background: linear-gradient(
+        45deg,
+        transparent,
+        transparent
+      ); /* End with a transparent gradient */
     }
   }
 </style>

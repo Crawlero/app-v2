@@ -197,7 +197,7 @@ function renderField(field, container, onDelete) {
 
 const fieldCache = new Map();
 
-function renderFields(fields, container) {
+export function renderFields(fields, container) {
   container.innerHTML = "";
 
   // render list of fields
