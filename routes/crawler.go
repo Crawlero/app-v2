@@ -49,6 +49,7 @@ func CrawerRoutes() chi.Router {
 	router.Get("/{crawlerID}", getCrawlerInfo)
 	router.Put("/{crawlerID}", updateCrawlerInfo)
 	router.Get("/{crawlerID}/schema", getCrawlerSchema)
+	router.Put("/{crawlerID}/schema", updateCrawlerSchema)
 	router.Get("/{crawlerID}/schedule", getCrawlerSchedule)
 
 	return router
@@ -121,30 +122,23 @@ func getCrawlerInfo(w http.ResponseWriter, r *http.Request) {
 func getCrawlerSchema(w http.ResponseWriter, r *http.Request) {
 	crawlerID := chi.URLParam(r, "crawlerID")
 	pool := db.GetDbPool()
-	crawler := Crawler{}
 
-	err := pool.QueryRow(context.Background(), "SELECT id, name, url, status, description FROM crawlers WHERE id = $1", crawlerID).Scan(
-		&crawler.ID,
-		&crawler.Name,
-		&crawler.Url,
-		&crawler.Status,
-		&crawler.Description,
+	var crawlerSchema sql.NullString;
+ 
+	err := pool.QueryRow(context.Background(), "SELECT schema FROM crawlers WHERE id = $1", crawlerID).Scan(
+		&crawlerSchema,
 	)
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
-	}
-
-	fields := []struct{ Name, Selector, Type string }{
-		{Name: "Title", Selector: ".title", Type: "text"},
-		{Name: "Link", Selector: ".link", Type: "url"},
 	}
 
 	if err := crawlerSchemaTmpl.Execute(
 		w,
 		map[string]interface{}{
 			"ID":     crawlerID,
-			"Fields": fields,
+			"Schema": crawlerSchema,
 		},
 	); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -212,6 +206,33 @@ func updateCrawlerInfo(w http.ResponseWriter, r *http.Request) {
 		name,
 		url,
 		desc,
+		crawlerID,
+	)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Write([]byte("Updated"))
+}
+
+func updateCrawlerSchema(w http.ResponseWriter, r *http.Request) {
+	crawlerID := chi.URLParam(r, "crawlerID")
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	fmt.Println("Form Data:", r.Form)
+	fmt.Println(r.FormValue("schema"))
+	fmt.Println(r.FormValue("n"))
+	fmt.Println("Okok")
+
+	pool := db.GetDbPool()
+	_, err := pool.Exec(
+		context.Background(),
+		"UPDATE crawlers SET schema = $1 WHERE id = $2",
+		r.FormValue("schema"),
 		crawlerID,
 	)
 

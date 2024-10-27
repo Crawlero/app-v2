@@ -2,27 +2,107 @@
 <div>
   {{ template "crawler-detail-header" . }}
 
-  <div id="form-container" class="mt-2"></div>
-  <button class="btn btn-primary" id="submit">Submit</button>
+  <form class="mt-2" id="form">
+    <div>
+      <label for="name" class="block text-sm font-medium text-gray-700 required">Name</label>
+      <input
+        id="name"
+        required
+        placeholder="postItem"
+        class="block disabled:cursor-not-allowed disabled:opacity-75 focus:outline-none border-0 form-input rounded-md placeholder-gray-400 text-sm px-2.5 py-1.5 shadow-sm bg-white text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-primary-500 max-w-72"
+      />
+    </div>
+    <div class="mt-2">
+      <label for="name" class="block text-sm font-medium text-gray-700 required">Base selector</label>
+      <input
+        id="baseSelector"
+        required
+        placeholder=".post.item"
+        class="block disabled:cursor-not-allowed disabled:opacity-75 focus:outline-none border-0 form-input rounded-md placeholder-gray-400 text-sm px-2.5 py-1.5 shadow-sm bg-white text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-primary-500 max-w-72"
+      />
+    </div>
+
+    <div class="mt-2 mb-2">
+      <label for="fields-container" class="block text-sm font-medium text-gray-700 required">Fields </label>
+      <div id="fields-container"></div>
+    </div>
+
+    <p class="text-gray-500" id="toast"></p>
+
+    <div class="mt-2 border-t border-gray-300 pt-2">
+      <button
+        class="font-medium rounded-md text-sm px-2.5 py-1.5 shadow-sm ring-1 ring-gray-300 text-gray-700 bg-gray-50 hover:bg-gray-100 focus:ring-2 focus:ring-primary-500 flex items-center disabled:opacity-75 disabled:cursor-not-allowed"
+        id="submit"
+        type="submit"
+      >
+        Submit
+      </button>
+    </form>
+  </div>
 </div>
 
 <script type="module">
   import { renderFields } from "/static/js/schema-editor.mjs";
 
-  const formContainer = document.getElementById("form-container");
-  const fields = [
-    {
-      name: "abc",
-      selector: "okok",
-      type: "text",
-    },
-  ];
+  let schema = {
+    name: "",
+    baseSelector: "",
+    fields: [
+      {
+        name: "",
+        selector: "",
+        type: "text",
+      },
+    ],
+  };
+
+  const schemaString = `{{ if .Schema.Valid }}{{ .Schema.String }}{{ end }}`;
+
+  try {
+    schema = JSON.parse(schemaString);
+  } catch (error) {
+    console.error("Failed to parse schema", error);
+  }
+
+  const formContainer = document.getElementById("fields-container");
+  const fields = schema.fields ?? [];
   renderFields(fields, formContainer);
 
-  document.getElementById("submit").addEventListener("click", () => {
-    console.log("submit");
-    console.log(fields);
-  });
+  document.getElementById("name").value = schema.name ?? "";
+  document.getElementById("baseSelector").value = schema.baseSelector ?? "";
+
+  async function onSubmit(event) {
+    document.getElementById("toast").textContent = "";
+
+    const crawlerID = "{{ .ID }}";
+    const url = `/crawler/${crawlerID}/schema`;
+    event.preventDefault();
+    const name = document.getElementById("name").value;
+    const baseSelector = document.getElementById("baseSelector").value;
+    const schema = { name, baseSelector, fields };
+    const searchParams = new URLSearchParams();
+    searchParams.append("schema", JSON.stringify(schema));
+
+    const response = await fetch(url, {
+      method: "PUT",
+      headers: {
+        "Accept": "*/*",
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: searchParams,
+    });
+
+    if (!response.ok) {
+      alert("Failed to update schema");
+      return;
+    }
+
+    const toast = document.getElementById("toast");
+    toast.textContent = "Schema updated successfully";
+  }
+
+  const form = document.getElementById("form");
+  form.addEventListener("submit", onSubmit);
 </script>
 
 <style>

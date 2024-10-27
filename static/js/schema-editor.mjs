@@ -11,7 +11,7 @@ const CLASS_NAMES = {
   select:
     "disabled:cursor-not-allowed disabled:opacity-75 focus:outline-none border-0 form-select rounded-md text-sm px-2.5 py-[7px] shadow-sm bg-white text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-primary-500 max-w-72",
   addBtn:
-    "font-medium rounded-md text-sm px-2.5 py-1.5 shadow-sm ring-1 ring-gray-300 text-gray-700 bg-gray-50 hover:bg-gray-100 focus:ring-2 focus:ring-primary-500 flex items-center disabled:opacity-75 disabled:cursor-not-allowed",
+    "font-medium rounded-md text-sm px-2.5 py-0.5 shadow-sm ring-1 ring-gray-300 text-gray-700 bg-gray-50 hover:bg-gray-100 focus:ring-2 focus:ring-primary-500 flex items-center disabled:opacity-75 disabled:cursor-not-allowed",
 };
 
 const FieldItem = {
@@ -92,6 +92,7 @@ const FieldItem = {
   addFieldButton() {
     const addFieldButton = document.createElement("button");
     addFieldButton.innerText = "Add +";
+    addFieldButton.type = "button";
     addFieldButton.className = CLASS_NAMES.addBtn;
     return addFieldButton;
   },
@@ -104,6 +105,7 @@ const FieldItem = {
 
   deleteFieldButton() {
     const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
     deleteButton.innerHTML = `
 <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="24" height="24" viewBox="0 0 10.5 10.5">
   <path d="M5.244 0.87A0.35 0.35 0 0 0 4.9 1.225V1.4H2.975a0.35 0.35 0 0 0 -0.355 0.35H2.1a0.35 0.35 0 1 0 0 0.7h6.3a0.35 0.35 0 1 0 0 -0.7h-0.52A0.35 0.35 0 0 0 7.525 1.4H5.6v-0.175a0.35 0.35 0 0 0 -0.356 -0.355M2.1 3.15l0.628 5.332A0.699 0.699 0 0 0 3.422 9.1h3.656a0.7 0.7 0 0 0 0.694 -0.618L8.4 3.15z"/>
