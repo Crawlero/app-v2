@@ -3,7 +3,9 @@ package routes
 import (
 	"context"
 	"crawlero-app/db"
+	"crawlero-app/job"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"text/template"
@@ -51,11 +53,6 @@ type Crawler struct {
 	Url         string
 	Status      string
 	Description sql.NullString
-}
-
-type RunInput struct {
-	Url    string `json:"url"`
-	Schema string `json:"schema"`
 }
 
 func CrawerRoutes() chi.Router {
@@ -267,10 +264,10 @@ func getListRun(w http.ResponseWriter, r *http.Request) {
 	pool := db.GetDbPool()
 
 	rows, err := pool.Query(
-        context.Background(),
-        "SELECT id, status, started_at, updated_at FROM runs WHERE crawler_id = $1 ORDER BY updated_at DESC",
-        crawlerID,
-    )
+		context.Background(),
+		"SELECT id, status, started_at, updated_at FROM runs WHERE crawler_id = $1 ORDER BY updated_at DESC",
+		crawlerID,
+	)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -313,11 +310,11 @@ func createRun(w http.ResponseWriter, r *http.Request) {
 	crawlerID := chi.URLParam(r, "crawlerID")
 	pool := db.GetDbPool()
 
-	var schema sql.NullString
+	var schemaStr sql.NullString
 	var url string
 
 	err := pool.QueryRow(context.Background(), "SELECT schema, url FROM crawlers WHERE id = $1", crawlerID).Scan(
-		&schema,
+		&schemaStr,
 		&url,
 	)
 
@@ -326,7 +323,7 @@ func createRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !schema.Valid {
+	if !schemaStr.Valid {
 		http.Error(w, "Schema is not defined", http.StatusBadRequest)
 		return
 	}
@@ -335,25 +332,33 @@ func createRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	runInput := RunInput{
-		Url:    url,
-		Schema: schema.String,
+	schema := job.Schema{}
+	err = json.Unmarshal([]byte(schemaStr.String), &schema)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
-	_, err = pool.Exec(
+	runInput := job.RunInput{
+		Url:    url,
+		Schema: schema,
+	}
+
+	var runId string
+	err = pool.QueryRow(
 		context.Background(),
-		"INSERT INTO runs (crawler_id, status, input, started_at, updated_at) VALUES ($1, $2, $3, $4, $5)",
+		"INSERT INTO runs (crawler_id, status, input, started_at, updated_at) VALUES ($1, $2, $3, now(), now()) RETURNING id",
 		crawlerID,
 		"running",
 		runInput,
-		"now()",
-		"now()",
-	)
+	).Scan(&runId)
 
+	err = job.CreateCrawJob(crawlerID, runId, runInput)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
-    w.Header().Add("HX-Redirect", fmt.Sprintf("/crawler/%s/run", crawlerID))
-    w.WriteHeader(http.StatusCreated)
+	w.Header().Add("HX-Redirect", fmt.Sprintf("/crawler/%s/run", crawlerID))
+	w.WriteHeader(http.StatusCreated)
 }

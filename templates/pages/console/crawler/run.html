@@ -5,10 +5,10 @@
   <div class="flex justify-start items-center gap-4 mt-4">
     <button
       hx-post="/crawler/{{ .ID }}/run"
-      class="font-medium rounded-md text-sm px-2.5 py-1.5 shadow-sm ring-1 ring-gray-300 text-gray-700 bg-gray-50 hover:bg-gray-100 focus:ring-2 focus:ring-primary-500 flex items-center disabled:opacity-75 disabled:cursor-not-allowed"
+      class="focus:outline-none focus-visible:outline-0 disabled:cursor-not-allowed disabled:opacity-75 aria-disabled:cursor-not-allowed aria-disabled:opacity-75 flex-shrink-0 font-medium rounded-md text-sm gap-x-1.5 px-2.5 py-1.5 shadow-sm text-white dark:text-gray-900 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-900 aria-disabled:bg-gray-900 dark:bg-white dark:hover:bg-gray-100 dark:disabled:bg-white dark:aria-disabled:bg-white focus-visible:ring-inset focus-visible:ring-2 focus-visible:ring-primary-500 dark:focus-visible:ring-primary-400 inline-flex items-center"
     >
       Run
-      <img src="/static/icons/play.svg" class="w-4 h-4 inline-block ml-1" />
+      <img src="/static/icons/play.svg" class="w-4 h-4 inline-block ml-1" alt="Run" />
     </button>
   </div>
 

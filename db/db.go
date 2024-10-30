@@ -25,6 +25,7 @@ func GetDbPool() *pgxpool.Pool {
 			}
 
 			dbpool = newPool
+            fmt.Println("Pool instance created.")
 		} else {
 			fmt.Println("Single instance already created.")
 		}
