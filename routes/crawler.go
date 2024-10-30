@@ -9,6 +9,7 @@ import (
 	"text/template"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 var consoleLayout, _ = template.ParseFiles(
@@ -34,12 +35,27 @@ var crawlerScheduleTmpl, _ = template.Must(consoleLayout.Clone()).ParseFiles(
 	"templates/pages/console/crawler/schedule.html",
 )
 
+var crawlerRunTmpl, _ = template.Must(consoleLayout.Clone()).ParseFiles(
+	"templates/parts/crawler-detail-header.html",
+	"templates/parts/run_row.html",
+	"templates/pages/console/crawler/run.html",
+)
+
+var crawlerRunRowTmpl, _ = template.ParseFiles(
+	"templates/parts/run_row.html",
+)
+
 type Crawler struct {
 	ID          string
 	Name        string
 	Url         string
 	Status      string
 	Description sql.NullString
+}
+
+type RunInput struct {
+	Url    string `json:"url"`
+	Schema string `json:"schema"`
 }
 
 func CrawerRoutes() chi.Router {
@@ -51,6 +67,8 @@ func CrawerRoutes() chi.Router {
 	router.Get("/{crawlerID}/schema", getCrawlerSchema)
 	router.Put("/{crawlerID}/schema", updateCrawlerSchema)
 	router.Get("/{crawlerID}/schedule", getCrawlerSchedule)
+	router.Get("/{crawlerID}/run", getListRun)
+	router.Post("/{crawlerID}/run", createRun)
 
 	return router
 }
@@ -123,8 +141,8 @@ func getCrawlerSchema(w http.ResponseWriter, r *http.Request) {
 	crawlerID := chi.URLParam(r, "crawlerID")
 	pool := db.GetDbPool()
 
-	var crawlerSchema sql.NullString;
- 
+	var crawlerSchema sql.NullString
+
 	err := pool.QueryRow(context.Background(), "SELECT schema FROM crawlers WHERE id = $1", crawlerID).Scan(
 		&crawlerSchema,
 	)
@@ -242,4 +260,100 @@ func updateCrawlerSchema(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write([]byte("Updated"))
+}
+
+func getListRun(w http.ResponseWriter, r *http.Request) {
+	crawlerID := chi.URLParam(r, "crawlerID")
+	pool := db.GetDbPool()
+
+	rows, err := pool.Query(
+        context.Background(),
+        "SELECT id, status, started_at, updated_at FROM runs WHERE crawler_id = $1 ORDER BY updated_at DESC",
+        crawlerID,
+    )
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var runs []map[string]interface{}
+
+	for rows.Next() {
+		var id string
+		var status string
+		var createdAt pgtype.Timestamp
+		var updatedAt pgtype.Timestamp
+
+		err = rows.Scan(&id, &status, &createdAt, &updatedAt)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		runs = append(runs, map[string]interface{}{
+			"ID":        id,
+			"Status":    status,
+			"CreatedAt": createdAt.Time.Format("2006-01-02 15:04"),
+			"UpdatedAt": updatedAt.Time.Format("2006-01-02 15:04"),
+		})
+	}
+
+	if err := crawlerRunTmpl.Execute(
+		w,
+		map[string]interface{}{
+			"ID":   crawlerID,
+			"Runs": runs,
+		},
+	); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func createRun(w http.ResponseWriter, r *http.Request) {
+	crawlerID := chi.URLParam(r, "crawlerID")
+	pool := db.GetDbPool()
+
+	var schema sql.NullString
+	var url string
+
+	err := pool.QueryRow(context.Background(), "SELECT schema, url FROM crawlers WHERE id = $1", crawlerID).Scan(
+		&schema,
+		&url,
+	)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if !schema.Valid {
+		http.Error(w, "Schema is not defined", http.StatusBadRequest)
+		return
+	}
+	if url == "" {
+		http.Error(w, "URL is not defined", http.StatusBadRequest)
+		return
+	}
+
+	runInput := RunInput{
+		Url:    url,
+		Schema: schema.String,
+	}
+
+	_, err = pool.Exec(
+		context.Background(),
+		"INSERT INTO runs (crawler_id, status, input, started_at, updated_at) VALUES ($1, $2, $3, $4, $5)",
+		crawlerID,
+		"running",
+		runInput,
+		"now()",
+		"now()",
+	)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+    w.Header().Add("HX-Redirect", fmt.Sprintf("/crawler/%s/run", crawlerID))
+    w.WriteHeader(http.StatusCreated)
 }

@@ -11,7 +11,7 @@
     <script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
   </head>
 
-  <body class="flex">
+  <body class="flex h-screen">
     <!-- Sidebar -->
     <aside
       class="w-64 h-screen bg-white text-gray-800 flex flex-col justify-between border-r border-gray-200"
@@ -69,7 +69,9 @@
     </aside>
 
     <!-- Main Content -->
-    <div class="flex-1 p-4">{{ template "content" . }}</div>
+    <div class="flex-1 p-4 overflow-y-auto">
+      {{ template "content" . }}
+    </div>
   </body>
 
   <style>

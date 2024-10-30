@@ -1,0 +1,66 @@
+{{ define "content" }}
+<div>
+  {{ template "crawler-detail-header" . }}
+
+  <div class="flex justify-start items-center gap-4 mt-4">
+    <button
+      hx-post="/crawler/{{ .ID }}/run"
+      class="font-medium rounded-md text-sm px-2.5 py-1.5 shadow-sm ring-1 ring-gray-300 text-gray-700 bg-gray-50 hover:bg-gray-100 focus:ring-2 focus:ring-primary-500 flex items-center disabled:opacity-75 disabled:cursor-not-allowed"
+    >
+      Run
+      <img src="/static/icons/play.svg" class="w-4 h-4 inline-block ml-1" />
+    </button>
+  </div>
+
+  <div class="overflow-x-auto mt-3">
+    <div class="min-w-full align-middle">
+      <div class="border rounded-lg divide-y divide-gray-200">
+        <div class="overflow-hidden">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"
+                >
+                  ID
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"
+                >
+                  Status
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"
+                >
+                  Start at
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"
+                >
+                  Updated at
+                </th>
+                <th
+                  class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase"
+                >
+                  Action
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+              {{ range .Runs }} {{ template "run_row" . }} {{ end }}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("htmx:responseError", (evt) => {
+    const xhr = evt.detail.xhr;
+    console.error(xhr.response);
+    alert(xhr.response);
+  });
+</script>
+{{ end }}
