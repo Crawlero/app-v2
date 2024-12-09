@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	KAFKA_BROKER      = "127.0.0.1:9093"
+	KAFKA_BROKER      = "127.0.0.1:9092"
 	KAFKA_INPUT_TOPIC = "crawl_inputs"
 )
 

@@ -3,9 +3,10 @@ package db
 import (
 	"context"
 	"fmt"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"os"
 	"sync"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 var lock = &sync.Mutex{}
@@ -18,14 +19,18 @@ func GetDbPool() *pgxpool.Pool {
 
 		if dbpool == nil {
 			fmt.Println("Creating pool instance now.")
-			newPool, err := pgxpool.New(context.Background(), os.Getenv("DATABASE_URL"))
+			config, err := pgxpool.ParseConfig(os.Getenv("DATABASE_URL"))
+			config.MaxConns = 10
+			config.MinConns = 1
+
+			newPool, err := pgxpool.NewWithConfig(context.Background(), config)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Unable to connection to database: %v\n", err)
 				os.Exit(1)
 			}
 
 			dbpool = newPool
-            fmt.Println("Pool instance created.")
+			fmt.Println("Pool instance created.")
 		} else {
 			fmt.Println("Single instance already created.")
 		}

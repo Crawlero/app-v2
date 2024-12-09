@@ -1,0 +1,119 @@
+{{ define "content" }}
+<div>
+  {{ template "crawler-detail-header" . }}
+
+  <link
+    rel="stylesheet"
+    href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/styles/default.min.css"
+  />
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/languages/json.min.js"></script>
+
+  <div class="min-w-full align-middle mt-2">
+    <div class="border rounded-lg divide-y divide-gray-200">
+      <div class="overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"
+              >
+                Run ID
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"
+              >
+                Status
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"
+              >
+                Start at
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"
+              >
+                Updated at
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200">
+            <tr>
+              <td class="px-6 py-4 text-sm text-gray-800 font-bold">
+                {{ .Run.ID }}
+              </td>
+              <td class="px-6 py-4 text-sm text-gray-800">{{ .Run.Status }}</td>
+              <td class="px-6 py-4 text-sm text-gray-800">
+                {{ .Run.StartedAt }}
+              </td>
+              <td class="px-6 py-4 text-sm text-gray-800">
+                {{ .Run.UpdatedAt }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="border rounded-lg divide-y divide-gray-200 mt-2">
+      <h2 class="text-lg font-bold p-4">Results</h2>
+      <div class="flex space-x-2 px-4">
+        <button class="bg-blue-500 px-2 py-2 rounded" onclick="exportToJson()">Export to JSON</button>
+        <button class="bg-blue-500 px-2 py-2 rounded" onclick="triggerWebhook()">Trigger Webhook</button>
+      </div>
+
+      <div class="p-4" id="run-result">
+        <pre><code id="json-result" class="json">Loading...</code></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', (event) => {
+  const resultLink = "{{ .Run.Result }}";
+  if (!resultLink) {
+    return;
+  }
+
+  const resultElement = document.getElementById('json-result');
+  
+  fetch(resultLink)
+    .then(response => response.json())
+    .then(result => {
+      const formattedResult = JSON.stringify(result, null, 2);
+      resultElement.textContent = formattedResult;
+      hljs.highlightElement(resultElement);
+    })
+    .catch(error => {
+      resultElement.textContent = 'Error fetching the JSON data';
+      console.error('Error fetching the JSON data:', error);
+    });
+
+    // handle format date time
+    const formatDateTime = (dateTime) => {
+      const date = new Date(dateTime);
+      return date.toLocaleString();
+    };
+
+    const startedAt = document.querySelector('.px-6.py-4.text-sm.text-gray-800:nth-child(3)');
+});
+
+const exportToJson = () => {
+  const resultElement = document.getElementById('json-result');
+  const result = JSON.parse(resultElement.textContent);
+  const data = JSON.stringify(result, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'result.json';
+
+  a.click();
+  URL.revokeObjectURL(url);
+  a.remove();
+}
+
+</script>
+{{ end }}

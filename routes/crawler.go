@@ -47,6 +47,11 @@ var crawlerRunRowTmpl, _ = template.ParseFiles(
 	"templates/parts/run_row.html",
 )
 
+var crawlerRunDetailTmpl, _ = template.Must(consoleLayout.Clone()).ParseFiles(
+    "templates/parts/crawler-detail-header.html",
+	"templates/pages/console/crawler/run-detail.html.tmpl",
+)
+
 type Crawler struct {
 	ID          string
 	Name        string
@@ -66,6 +71,7 @@ func CrawerRoutes() chi.Router {
 	router.Get("/{crawlerID}/schedule", getCrawlerSchedule)
 	router.Get("/{crawlerID}/run", getListRun)
 	router.Post("/{crawlerID}/run", createRun)
+	router.Get("/{crawlerID}/run/{runID}", runDetail)
 
 	return router
 }
@@ -292,6 +298,7 @@ func getListRun(w http.ResponseWriter, r *http.Request) {
 			"Status":    status,
 			"CreatedAt": createdAt.Time.Format("2006-01-02 15:04"),
 			"UpdatedAt": updatedAt.Time.Format("2006-01-02 15:04"),
+			"CrawlerID": crawlerID,
 		})
 	}
 
@@ -361,4 +368,55 @@ func createRun(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("HX-Redirect", fmt.Sprintf("/crawler/%s/run", crawlerID))
 	w.WriteHeader(http.StatusCreated)
+}
+
+func runDetail(w http.ResponseWriter, r *http.Request) {
+	runID := chi.URLParam(r, "runID")
+	pool := db.GetDbPool()
+
+	runDetail := struct {
+		CrawlerId string
+		RunId     string
+		Status    string
+		Input     string
+		Result    string
+		StartedAt pgtype.Timestamp
+		UpdatedAt pgtype.Timestamp
+	}{}
+
+	err := pool.QueryRow(
+		context.Background(),
+		"SELECT id, crawler_id, status, input, result, started_at, updated_at FROM runs WHERE id = $1",
+		runID,
+	).Scan(
+		&runDetail.RunId,
+		&runDetail.CrawlerId,
+		&runDetail.Status,
+		&runDetail.Input,
+		&runDetail.Result,
+		&runDetail.StartedAt,
+		&runDetail.UpdatedAt,
+	)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err := crawlerRunDetailTmpl.Execute(
+		w,
+		map[string]interface{}{
+			"ID": runDetail.CrawlerId,
+			"Run": map[string]interface{}{
+				"ID":        runDetail.RunId,
+				"Status":    runDetail.Status,
+				"Input":     runDetail.Input,
+				"Result":    runDetail.Result,
+				"StartedAt": runDetail.StartedAt.Time.Format("2006-01-02 15:04"),
+				"UpdatedAt": runDetail.UpdatedAt.Time.Format("2006-01-02 15:04"),
+			},
+		},
+	); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
